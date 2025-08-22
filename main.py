@@ -1,12 +1,21 @@
 import streamlit as st
 from PIL import Image
-import pytesseract
+import easyocr
 from groq import Groq
+import numpy as np
 
 # Set up the page
 st.set_page_config(page_title="OCR + LLM Text Analyzer", page_icon="✍️")
 st.title("Image to Text Analysis with OCR and LLM")
 st.markdown("---")
+
+# Initialize EasyOCR reader once to save resources
+@st.cache_resource
+def get_easyocr_reader():
+    """Caches the EasyOCR reader to avoid reloading it on every run."""
+    return easyocr.Reader(['es', 'en']) # You can add more languages here
+
+reader = get_easyocr_reader()
 
 # Groq API Key Input
 with st.expander("🔑 **Enter your Groq API Key**"):
@@ -23,11 +32,19 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_container_width=True)
     st.markdown("---")
 
-    # OCR Processing
+    # OCR Processing with EasyOCR
     st.header("2. Extracting text with OCR")
     with st.spinner("Extracting text..."):
         try:
-            extracted_text = pytesseract.image_to_string(image)
+            # Convert PIL Image to a NumPy array for EasyOCR
+            image_np = np.array(image)
+            
+            # Read text from the image
+            results = reader.readtext(image_np)
+            
+            # Concatenate all detected text into a single string
+            extracted_text = " ".join([text for (bbox, text, prob) in results])
+            
             if extracted_text.strip():
                 st.success("Text extracted successfully!")
                 st.text_area("Extracted Text", extracted_text, height=250)
@@ -69,7 +86,7 @@ if uploaded_file is not None:
                                     "content": prompt,
                                 }
                             ],
-                            model="llama3-8b-8192",  # You can choose a different model if desired
+                            model="llama3-8b-8192", # You can choose a different model if desired
                         )
                         
                         llm_response = chat_completion.choices[0].message.content
