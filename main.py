@@ -1,22 +1,13 @@
 import streamlit as st
 from PIL import Image
-import easyocr
+import pytesseract
 from groq import Groq
-import numpy as np
+# Note: You no longer need to import numpy
 
 # Set up the page
 st.set_page_config(page_title="OCR + LLM Text Analyzer", page_icon="✍️")
 st.title("Image to Text Analysis with OCR and LLM")
 st.markdown("---")
-
-# Initialize EasyOCR reader once to save resources
-@st.cache_resource
-def get_easyocr_reader():
-    """Caches the EasyOCR reader to avoid reloading it on every run."""
-    # Reader with Spanish and English languages
-    return easyocr.Reader(['es', 'en'])
-
-reader = get_easyocr_reader()
 
 # Groq API Key Input
 with st.expander("🔑 **Enter your Groq API Key**"):
@@ -30,23 +21,14 @@ uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg
 if uploaded_file is not None:
     # Display the uploaded image
     image = Image.open(uploaded_file)
-    # Use use_container_width for a better display on all screen sizes
     st.image(image, caption="Uploaded Image", use_container_width=True)
     st.markdown("---")
 
-    # OCR Processing with EasyOCR
+    # OCR Processing with pytesseract
     st.header("2. Extracting text with OCR")
     with st.spinner("Extracting text..."):
         try:
-            # Convert PIL Image to a NumPy array for EasyOCR
-            image_np = np.array(image)
-            
-            # Read text from the image
-            results = reader.readtext(image_np)
-            
-            # Concatenate all detected text into a single string
-            extracted_text = " ".join([text for (bbox, text, prob) in results])
-            
+            extracted_text = pytesseract.image_to_string(image)
             if extracted_text.strip():
                 st.success("Text extracted successfully!")
                 st.text_area("Extracted Text", extracted_text, height=250)
@@ -70,7 +52,6 @@ if uploaded_file is not None:
                     try:
                         client = Groq(api_key=groq_api_key)
                         
-                        # Define the prompt for the LLM
                         prompt = (
                             f"Analyze the following text from an image. Provide a detailed analysis, a concise summary, and a thoughtful reflection on the content.\n\n"
                             f"**Text:**\n{extracted_text}\n\n"
@@ -93,7 +74,6 @@ if uploaded_file is not None:
                         
                         llm_response = chat_completion.choices[0].message.content
                         
-                        # Display the LLM's response
                         st.subheader("LLM Results")
                         st.write(llm_response)
                         
