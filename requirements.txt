@@ -1,4 +1,6 @@
 streamlit
 Pillow
-pytesseract
+easyocr
 groq
+numpy
+torch
