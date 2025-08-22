@@ -13,7 +13,8 @@ st.markdown("---")
 @st.cache_resource
 def get_easyocr_reader():
     """Caches the EasyOCR reader to avoid reloading it on every run."""
-    return easyocr.Reader(['es', 'en']) # You can add more languages here
+    # Reader with Spanish and English languages
+    return easyocr.Reader(['es', 'en'])
 
 reader = get_easyocr_reader()
 
@@ -29,6 +30,7 @@ uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg
 if uploaded_file is not None:
     # Display the uploaded image
     image = Image.open(uploaded_file)
+    # Use use_container_width for a better display on all screen sizes
     st.image(image, caption="Uploaded Image", use_container_width=True)
     st.markdown("---")
 
@@ -86,7 +88,7 @@ if uploaded_file is not None:
                                     "content": prompt,
                                 }
                             ],
-                            model="llama3-8b-8192", # You can choose a different model if desired
+                            model="llama3-8b-8192",
                         )
                         
                         llm_response = chat_completion.choices[0].message.content
