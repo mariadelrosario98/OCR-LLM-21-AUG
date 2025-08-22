@@ -3,4 +3,4 @@ Pillow
 easyocr
 groq
 numpy
-torch
+torch==2.3.0+cpu
